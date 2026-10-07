@@ -11,6 +11,7 @@ from pathlib import Path
 
 from asgiref.sync import async_to_sync
 from django.db import connection
+from django.conf import settings
 from django.db.utils import OperationalError
 from django.http import FileResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -28,6 +29,7 @@ from ..permissions import (
 )
 from ..sql_cursor import with_sql_rewrite
 from ..sql_helpers import _get_table_id_column_type
+from ..demo import unavailable_response
 from ..utils.ru_dates import format_ru_datetime
 
 connection = with_sql_rewrite(connection)
@@ -300,6 +302,8 @@ def _user_can_access_chat(user, chat_id):
 
 def _notify_chat_participant(chat_id: int, sender_role: str, *, accepted: bool = False):
     """Best-effort: уведомить вторую сторону о новом сообщении/принятии из Django webapp."""
+    if settings.DEMO_MODE:
+        return
     try:
         import asyncio as _asyncio_local
         import db as chat_db
@@ -374,6 +378,8 @@ def _notify_chat_participant(chat_id: int, sender_role: str, *, accepted: bool =
 
 def _notify_chat_closed(chat_id: int, sender_role: str):
     """Best-effort: уведомить вторую сторону, что обращение завершено по согласию сторон."""
+    if settings.DEMO_MODE:
+        return
     try:
         import asyncio as _asyncio_local
         import db as chat_db
@@ -444,6 +450,8 @@ def _notify_chat_closed(chat_id: int, sender_role: str):
 
 def _notify_chat_close_request(chat_id: int, sender_role: str):
     """Best-effort: уведомить вторую сторону, что инициирован запрос на завершение обращения."""
+    if settings.DEMO_MODE:
+        return
     try:
         import asyncio as _asyncio_local
         import db as chat_db
@@ -716,6 +724,8 @@ def crm_chat_detail(request, chat_id):
 @login_required_custom
 def api_chat_create_payment(request, chat_id):
     """API: создать ссылку на оплату из CRM-чата специалиста."""
+    if settings.DEMO_MODE:
+        return unavailable_response()
     user = get_current_user(request)
     if not _user_can_access_chat(user, chat_id):
         return JsonResponse({'success': False, 'error': 'Нет доступа к этому чату'}, status=403)

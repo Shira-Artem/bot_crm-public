@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 
 from django.db import connection
+from django.conf import settings
 from django.shortcuts import redirect, render
 
 from ..permissions import director_required, get_current_user, login_required_custom
@@ -263,6 +264,8 @@ def _ensure_external_catalog_tables():
 
 def _refresh_external_products_catalog():
     """Пробует подтянуть актуальные внешние продукты из API и синхронизировать их в БД."""
+    if settings.DEMO_MODE:
+        return
     try:
         from bot.extern_ofd import get_products
         for category in ('ofd', 'service', 'services_for_orders', 'edo'):
@@ -480,11 +483,15 @@ def external_products_page(request):
                         error = 'Не удалось сохранить цену кода.'
 
         if action == 'refresh_catalog':
-            _refresh_external_products_catalog()
-            suffix = f'?tab={active_tab}&refreshed=1'
-            if category_filter:
-                suffix += f'&category={category_filter}'
-            return redirect(f'{request.path}{suffix}')
+            if settings.DEMO_MODE:
+                from ..demo import DEMO_UNAVAILABLE
+                error = DEMO_UNAVAILABLE
+            else:
+                _refresh_external_products_catalog()
+                suffix = f'?tab={active_tab}&refreshed=1'
+                if category_filter:
+                    suffix += f'&category={category_filter}'
+                return redirect(f'{request.path}{suffix}')
 
         if action != 'save':
             product_id = ''

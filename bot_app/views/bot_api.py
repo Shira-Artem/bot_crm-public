@@ -7,6 +7,7 @@ import os as _os
 from datetime import datetime
 
 from django.db import connection
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -22,6 +23,9 @@ _DJANGO_CRM_TOKEN = _os.getenv("DJANGO_CRM_TOKEN", "")
 
 def _check_bearer_token(request):
     """Verify Bearer token from Authorization header. Returns error response or None."""
+    if settings.DEMO_MODE:
+        from ..demo import unavailable_response
+        return unavailable_response()
     if not _DJANGO_CRM_TOKEN:
         return JsonResponse({"success": False, "error": "API token not configured"}, status=500)
     auth = request.headers.get("Authorization", "")

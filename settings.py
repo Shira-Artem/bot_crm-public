@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(BASE_DIR / "inf.env")
@@ -9,6 +10,8 @@ LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "change-me-in-production")
 DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() in ("1", "true", "yes")
+DEMO_MODE = os.getenv("DEMO_MODE", "False").lower() in ("1", "true", "yes")
+DEMO_DIRECTOR_ID = 1
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost").split(",") if h.strip()]
 
 INSTALLED_APPS = [
@@ -24,6 +27,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'bot_app.demo.DemoLoginMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -66,6 +70,8 @@ DATABASES = {
         },
     }
 }
+if DEMO_MODE and DATABASES['default']['NAME'] != 'bot_crm_demo':
+    raise ImproperlyConfigured('DEMO_MODE requires the isolated bot_crm_demo database.')
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},

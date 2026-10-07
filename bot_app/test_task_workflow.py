@@ -20,18 +20,18 @@ class TaskWorkflowUnitTests(unittest.TestCase):
         self.assertEqual(normalize_status("new"), TaskStatus.AWAITING_ASSIGNMENT.value)
         self.assertEqual(normalize_status("waiting"), TaskStatus.AWAITING_ASSIGNMENT.value)
 
-    def test_assign_only_director_and_only_once(self):
+    def test_assign_only_director_and_only_waiting_task(self):
         task = TaskSnapshot(id=1, status="awaiting_assignment", assignee_id=None)
         self.assertEqual(
             assign_task(task=task, specialist_id=7, actor_is_director=True),
-            TaskStatus.ASSIGNED.value,
+            TaskStatus.IN_PROGRESS.value,
         )
         with self.assertRaises(TaskWorkflowError):
             assign_task(task=task, specialist_id=7, actor_is_director=False)
 
         with self.assertRaises(TaskWorkflowError):
             assign_task(
-                task=TaskSnapshot(id=1, status="awaiting_assignment", assignee_id=3),
+                task=TaskSnapshot(id=1, status="in_progress", assignee_id=3),
                 specialist_id=7,
                 actor_is_director=True,
             )
@@ -42,11 +42,9 @@ class TaskWorkflowUnitTests(unittest.TestCase):
         with self.assertRaises(TaskWorkflowError):
             complete_task(task=task, actor_id=8)
 
-    def test_start_only_assignee_from_assigned_or_awaiting(self):
-        self.assertEqual(
-            start_task(task=TaskSnapshot(id=3, status="assigned", assignee_id=7), actor_id=7),
-            TaskStatus.IN_PROGRESS.value,
-        )
+    def test_start_only_assignee_from_awaiting(self):
+        with self.assertRaises(TaskWorkflowError):
+            start_task(task=TaskSnapshot(id=3, status="assigned", assignee_id=7), actor_id=7)
         self.assertEqual(
             start_task(task=TaskSnapshot(id=4, status="awaiting_assignment", assignee_id=7), actor_id=7),
             TaskStatus.IN_PROGRESS.value,

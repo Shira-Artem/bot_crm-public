@@ -1,5 +1,55 @@
 # BOT CRM — омниканальная CRM, сервисная платформа и бизнес-бэкенд
 
+## Публичная DEMO CRM (локально)
+
+Рабочая ветка `demo-setup` запускает только Django CRM и MySQL 8. Все данные
+генерируются кодом; production дампы, токены, боты и внешние сервисы не нужны.
+Для локального запуска нужен Python 3.12 и Docker Desktop / Docker Engine.
+
+После публикации ветки `demo-setup` команды для чистой Windows машины:
+
+```powershell
+git clone https://github.com/Shira-Artem/bot_crm-public.git
+cd bot_crm-public
+git switch demo-setup
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --index-url https://pypi.org/simple -r requirements.txt
+Copy-Item demo.env.example inf.env
+docker compose up -d --wait
+.\.venv\Scripts\python.exe manage.py reset_demo
+.\.venv\Scripts\python.exe manage.py check
+.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+```
+
+Откройте <http://127.0.0.1:8000/>. При `DEMO_MODE=True` middleware создаёт
+обычную CRM сессию для демонстрационного директора (ID 1), поэтому все
+существующие проверки ролей продолжают работать. `/login/` перенаправляет
+на dashboard. `inf.env` локальный и исключён из Git. Для любого публичного
+развёртывания задайте собственный `DJANGO_SECRET_KEY` и параметры хоста.
+
+`reset_demo` полностью пересоздаёт CRM таблицы из `structure.sql`, отмечает
+уже существующую структуру Django migrations как применённую и загружает
+искусственные данные. Запускайте его снова, чтобы стереть изменения посетителей.
+Команда требует `DEMO_MODE=True`, БД `bot_crm_demo` и отдельного MySQL
+пользователя `demo`. Она не может работать с обычной production БД.
+
+Для передачи развёртыванию в [demo/demo_snapshot.sql](demo/demo_snapshot.sql)
+включён готовый снимок MySQL 8: схема и только синтетические данные. В нём нет
+сессий, попыток входа, triggers и production `DEFINER`. Снимок успешно проверен
+обратным импортом. Для нового развёртывания предпочтительнее `reset_demo`: он
+создаёт те же данные, но вычисляет сроки относительно дня запуска.
+
+Compose открывает MySQL только на `127.0.0.1:3307`, хранит данные в Docker
+volume `demo_mysql` и не запускает другие сервисы. `structure.sql` используется
+только как источник CREATE TABLE: старые `DEFINER`, triggers, команды RocksDB и
+production имя БД не исполняются. В DEMO сетевые действия для платежа из чата,
+обновления Alfa-Bank, каталога ОФД и уведомлений Telegram/MAX отключены.
+Входящий bot API также закрыт. Внутренние операции CRM (создание и изменение
+тестовых записей) работают и сбрасываются командой выше.
+
+Сейчас ветка существует только в текущей рабочей копии: публикация в GitHub
+отдельно не выполнялась.
+
 > Единая система для клиентов, компаний, партнёров и сотрудников: Django CRM, Telegram- и MAX-боты, FastAPI WebApp, поддержка, телефония Asterisk, каталог, платежи, заказы, задачи, ККТ, реферальная программа, лояльность, финансовый контур и внешние интеграции.
 
 ![Python](https://img.shields.io/badge/Python-3.x-3776AB?logo=python&logoColor=white)

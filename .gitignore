@@ -1,0 +1,9 @@
+inf.env
+.env/
+.venv/
+__pycache__/
+*.py[cod]
+logs/
+files/
+media/
+staticfiles/

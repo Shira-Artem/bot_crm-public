@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.db import connection
+from django.conf import settings
 from django.shortcuts import redirect, render
 
 from ..sql_cursor import with_sql_rewrite
@@ -109,6 +110,8 @@ def _record_login_attempt(login_name, ip_address, success):
 
 def login_page(request):
     """Страница входа"""
+    if settings.DEMO_MODE:
+        return redirect('bot_app:dashboard')
     _ensure_login_attempts_table()
     error = None
 
@@ -171,4 +174,6 @@ def login_page(request):
 def logout_view(request):
     """Выход из системы"""
     request.session.flush()
+    if settings.DEMO_MODE:
+        return redirect('bot_app:dashboard')
     return redirect('bot_app:login')

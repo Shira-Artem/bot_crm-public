@@ -5,6 +5,7 @@ from io import BytesIO
 from datetime import date, timedelta
 
 from django.db import connection
+from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -94,6 +95,8 @@ def _sync_deal_and_order_tasks_from_orders():
     - deal: только ручные сделки (source='manual')
     - order: все оплаты из ботов + оплаты в чатах специалистов
     """
+    if settings.DEMO_MODE:
+        return  # Keep the curated demo task board stable during browsing.
     _ensure_tasks_table()
     with connection.cursor() as cursor:
         cursor.execute("""

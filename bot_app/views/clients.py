@@ -5,6 +5,7 @@ import logging
 from datetime import date, datetime
 
 from django.db import connection
+from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -744,6 +745,9 @@ def crm_client_detail(request, client_id):
 @login_required_custom
 @require_POST
 def api_alfabank_ip_refresh(request, client_id):
+    if settings.DEMO_MODE:
+        from ..demo import unavailable_response
+        return unavailable_response()
     """Обновить статус заявки ИП из Альфа-Банк API и вернуть актуальные данные."""
     user = get_current_user(request)
     if not _check_specialist_client_access(user, client_id):
