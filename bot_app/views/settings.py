@@ -170,7 +170,7 @@ def system_settings_page(request):
 
 
 def _load_external_catalog_seed():
-    base = Path(__file__).resolve().parent.parent.parent / 'bot'
+    base = Path(settings.BASE_DIR) / 'demo' / 'catalog'
     with open(base / 'operators.json', 'r', encoding='utf-8') as f:
         operators = json.load(f)
     with open(base / 'ofd_deadlines.json', 'r', encoding='utf-8') as f:
